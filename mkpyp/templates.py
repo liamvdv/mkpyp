@@ -18,7 +18,7 @@ class Author:
 @dataclass
 class Dependency:
     name: str
-    op: Literal[">=", "==", "<="]  # two sided possible?
+    op: Literal[">=", "==", "<=", ""]  # two sided possible?
     version: Optional[str]
 
     def __str__(self) -> str:
