@@ -413,6 +413,7 @@ clean:
 \trm -rf .cache
 \trm -rf .pytest_cache
 \trm -rf .mypy_cache
+\trm -rf .ruff_cache
 \trm -rf *.egg-info
 \trm -rf build
 \trm -rf dist

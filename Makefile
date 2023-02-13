@@ -60,6 +60,7 @@ clean:
 	rm -f `find . -type f -name '*~'`
 	rm -f `find . -type f -name '.*~'`
 	rm -rf .cache
+	rm -rf .ruff_cache
 	rm -rf .pytest_cache
 	rm -rf .mypy_cache
 	rm -rf *.egg-info
