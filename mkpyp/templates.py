@@ -603,8 +603,10 @@ The location of where dependencies are declared depends on their scope.
 We generate the requirements files with `make refresh-requirements`. Reinstall with `make install`.
 
 ## Publish
-1. ensure version is correct in $NAME/version.py
-2. run
+Build the project with `hatch build`.
+Now run `hatch publish --repo test` to upload the package to `test.pypi.org`.
+Use `hatch publish --repo main` to upload to the production PyPI.
+Define custom targets as per definied [here](https://hatch.pypa.io/latest/publish/#repository).
 """.strip()
 )
 
