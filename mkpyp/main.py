@@ -237,9 +237,9 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
         else:
             print(f"Creating file: {path}")
 
-    filewriter = templates.generate_file
+    filewriter = templates.generate_output
     if not testing:
-        filewriter = templates.generate_output
+        filewriter = templates.generate_file
 
     Action(mkdir, str(base)).then(
         Action(mkdir, str(base / name)).then(
