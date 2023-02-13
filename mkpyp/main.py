@@ -1,15 +1,18 @@
 from __future__ import print_function, unicode_literals
-from typing import Callable, get_args, Optional
-from mkpyp import templates  # todo: make full path
+
 import os
+import string
+import subprocess
 import sys
 from pathlib import Path
-import string
+from typing import Callable, Optional, get_args
+
 import fire
 from InquirerPy import prompt
 from InquirerPy.validator import EmptyInputValidator
-import subprocess
 from pydantic import BaseModel
+
+from mkpyp import templates  # todo: make full path
 
 # TODO(liamvdv): start actually supporting automatic ChangeLog generation.
 
@@ -24,21 +27,19 @@ def get_git_config() -> dict:
             data[k] = v
     return data
 
+
 def get_python_version() -> str:
     """returns Major.Minor Python version, e. g. 3.10"""
     mmp = sys.version.split(" ")[0]
     mm = ".".join(mmp.split(".", 3)[:2])
     return mm
 
+
 name_alphabet = string.ascii_lowercase + string.digits + "_-"
 
 
 def name_validator(name: str) -> bool:
-    return (
-        len(name) > 0
-        and name[0] in string.ascii_lowercase
-        and all([char in name_alphabet for char in name])
-    )
+    return len(name) > 0 and name[0] in string.ascii_lowercase and all([char in name_alphabet for char in name])
 
 
 def promp_user() -> templates.TemplateProps:
@@ -63,7 +64,7 @@ def promp_user() -> templates.TemplateProps:
             "message": "Project Version:",
             "default": "0.1.0",
             "validate": lambda v: semantic_version_validator(v, 2),
-            "invalid_message": "must be Major.Minor.Patch all digits"
+            "invalid_message": "must be Major.Minor.Patch all digits",
         },
         {
             "type": "input",
@@ -84,7 +85,7 @@ def promp_user() -> templates.TemplateProps:
             "message": "Python Version:",
             "default": lambda _: get_python_version(),
             "validate": lambda v: semantic_version_validator(v, 1),
-            "invalid_message": "must be Major.Minor all digits"
+            "invalid_message": "must be Major.Minor all digits",
         },
         {
             "type": "input",
@@ -96,9 +97,7 @@ def promp_user() -> templates.TemplateProps:
             "type": "list",
             "name": "license_type",
             "multiselect": False,
-            "choices": get_args(
-                templates.TemplateProps.__annotations__.get("license_type")
-            ),
+            "choices": get_args(templates.TemplateProps.__annotations__.get("license_type")),
             "message": "License:",
             "default": "MIT",
         },
@@ -133,24 +132,26 @@ def promp_user() -> templates.TemplateProps:
     email = result.pop("author.email", "")
     result["authors"] = [templates.Author(name, email)]
 
-    result["dependencies"] = templates.Dependency.all_from_string(
-        result.pop("dependencies", "")
-    )
+    result["dependencies"] = templates.Dependency.all_from_string(result.pop("dependencies", ""))
 
     return result
 
+
 def prompt_do_proceed(default=True) -> bool:
-    questions = [{
-        "type": "confirm",
-        "message": "Proceed?",
-        "name": "proceed",
-        "default": default,
-    }]
+    questions = [
+        {
+            "type": "confirm",
+            "message": "Proceed?",
+            "name": "proceed",
+            "default": default,
+        }
+    ]
     result = prompt(questions)
     return result.get("proceed")
 
+
 def semantic_version_validator(version: str, ndots: int) -> bool:
-    assert 0 <= ndots <= 2, "version must be either Major.Minor.Patch or Major.Minor or Major" 
+    assert 0 <= ndots <= 2, "version must be either Major.Minor.Patch or Major.Minor or Major"
     parts = version.split(".")
     return len(parts) == ndots + 1 and all(part.isnumeric() for part in parts)
 
@@ -161,9 +162,7 @@ class Action:
     kwargs: dict
     children: list["Action"]
 
-    def __init__(
-        self, func: Callable, *args: list, children: list["Action"] = None, **kwargs
-    ):
+    def __init__(self, func: Callable, *args: list, children: list["Action"] = None, **kwargs):
         if children is None:
             children = []
         self.func = func
@@ -182,9 +181,9 @@ class Action:
             action.execute()
 
 
-def mkpyp(dry=False, infile: str=None, outfile: str=None):
+def mkpyp(dry=False, infile: str = None, outfile: str = None):
     """
-    generate idiomatic python project in subdirectory 
+    generate idiomatic python projects in subdirectory
 
     Parameters
     ----------
@@ -207,14 +206,15 @@ def mkpyp(dry=False, infile: str=None, outfile: str=None):
         if dry:
             print(f"Writing {outfile}:")
             print("-" * 80)
-            print(raw) 
-        else: 
+            print(raw)
+        else:
             with open(outfile, "x", encoding="utf-8") as file:
                 file.write(raw)
     else:
         print(raw)
         if prompt_do_proceed():
             generate(Path.cwd(), file.props, dry)
+
 
 def generate(pwd: Path, props: dict, testing: bool = True):
     if not pwd.exists():
@@ -231,11 +231,7 @@ def generate(pwd: Path, props: dict, testing: bool = True):
     mkdir = os.mkdir if not testing else mock_mkdir
     filewriter = templates.generate_file if not testing else templates.generate_output
 
-    mkfile = (
-        lambda p: p.open("x").close()
-        if not testing
-        else lambda p: print(f"Creating file: {p}")
-    )
+    mkfile = lambda p: p.open("x").close() if not testing else lambda p: print(f"Creating file: {p}")
     Action(mkdir, str(base)).then(
         Action(mkdir, str(base / name)).then(
             Action(mkfile, base / name / "main.py"),
@@ -256,9 +252,7 @@ def generate(pwd: Path, props: dict, testing: bool = True):
                 props,
             ),
             # req_base / pyproject.txt is generated from pyproject.
-            Action(
-                filewriter, req_base / "all.txt", templates.requirements_all_txt, props
-            ),
+            Action(filewriter, req_base / "all.txt", templates.requirements_all_txt, props),
         ),
         Action(mkdir, str(base / "tests")),
         Action(filewriter, base / "pyproject.toml", templates.pyproject_toml, props),
@@ -275,8 +269,10 @@ def generate(pwd: Path, props: dict, testing: bool = True):
         ),
     ).execute()
 
+
 def run():
     fire.Fire(mkpyp, name="mkpyp")
+
 
 if __name__ == "__main__":
     run()

@@ -1,9 +1,10 @@
-from typing import Literal, Callable, TypedDict, get_args, Optional
-from string import Template
 import io
 import sys
-from pathlib import Path
 from datetime import date
+from pathlib import Path
+from string import Template
+from typing import Callable, Literal, Optional, TypedDict, get_args
+
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
@@ -12,6 +13,7 @@ from pydantic.dataclasses import dataclass
 class Author:
     name: str
     email: str
+
 
 @dataclass
 class Dependency:
@@ -23,7 +25,7 @@ class Dependency:
         return f"'{self.name}{self.op or ''}{self.version or ''}'"
 
     @classmethod
-    def from_string(cls, s: str) -> Optional['Dependency']:
+    def from_string(cls, s: str) -> Optional["Dependency"]:
         s = s.strip()
         if not s:
             return None
@@ -38,7 +40,8 @@ class Dependency:
     @classmethod
     def all_from_string(cls, line: str) -> list[str]:
         deps = [cls.from_string(slug) for slug in line.split(" ")]
-        return [dep for dep in deps if dep] # smile
+        return [dep for dep in deps if dep]  # smile
+
 
 class AnyProps(TypedDict):
     pass
@@ -176,9 +179,7 @@ def pyproject_toml(out: io.TextIOBase, props: PyprojectTomlProps):
     NAME = props["name"]
     AUTHORS = ",\n\t".join(
         [
-            "{{name = '{name}', email = '{email}'}}".format(
-                name=author.name, email=author.email
-            )
+            "{{name = '{name}', email = '{email}'}}".format(name=author.name, email=author.email)
             for author in props["authors"]
         ]
     )
@@ -284,10 +285,7 @@ template_custom_license = "TODO(all): https://choosealicense.com/"
 
 
 def license(out: io.TextIOBase, props: LicenseProps):
-    AUTHORS = (
-        ", ".join([author.name for author in props["authors"]])
-        + " and other contributors"
-    )
+    AUTHORS = ", ".join([author.name for author in props["authors"]]) + " and other contributors"
     # FEATURE(liamvdv): inform users that they may need to update their license:
     #                   Either YYYY - YYYY or just YYYY format.
     YEARSPAN = str(date.today().year)
@@ -632,6 +630,7 @@ class TemplateProps(
 ):
     pass
 
+
 class TemplateFile(BaseModel):
     tempalte_spec = "0.1"
     props: TemplateProps
@@ -639,16 +638,13 @@ class TemplateFile(BaseModel):
     class Meta:
         extra = "ignore"
 
-def generate_file(
-    path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps
-):
+
+def generate_file(path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps):
     with path.open("x", encoding="utf-8") as file:
         templator(file, props)
 
 
-def generate_output(
-    path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps
-):
+def generate_output(path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps):
     print("=" * 80)
     print(f"Writing {path}:")
     print("-" * 80)
