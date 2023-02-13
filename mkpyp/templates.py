@@ -106,7 +106,7 @@ filterwarnings = [
 [tool.ruff]
 line-length = 120
 extend-select = ['Q', 'RUF100', 'C90']
-flake8-quotes = {inline-quotes = 'single', multiline-quotes = 'double'}
+flake8-quotes = {inline-quotes = 'double', multiline-quotes = 'double'}
 mccabe = { max-complexity = 14 }
 
 [tool.ruff.per-file-ignores]
