@@ -5,10 +5,10 @@ import string
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, get_args
+from typing import Any, Callable, Optional, Union, get_args
 
-import fire
-from InquirerPy import prompt
+import fire  # type: ignore[import]
+import InquirerPy
 from InquirerPy.validator import EmptyInputValidator
 
 from mkpyp import templates
@@ -16,7 +16,7 @@ from mkpyp import templates
 # TODO(liamvdv): start actually supporting automatic ChangeLog generation.
 
 
-def get_git_config() -> dict:
+def get_git_config() -> dict[str, str]:
     data = {}
     res = subprocess.run(["git", "config", "--list"], stdout=subprocess.PIPE)
     git_user = res.stdout.strip().decode()
@@ -44,7 +44,7 @@ def name_validator(name: str) -> bool:
 def promp_user() -> templates.TemplateProps:
     git_config = get_git_config()
 
-    questions = [
+    questions: list[dict[str, Any]] = [
         {
             "type": "input",
             "name": "name",
@@ -127,18 +127,18 @@ def promp_user() -> templates.TemplateProps:
             "default": lambda result: result.get("source_url", ""),
         },
     ]
-    result = prompt(questions)
+    result = InquirerPy.prompt(questions)  # type: ignore[attr-defined]
 
     name = result.pop("author.name", "")
     email = result.pop("author.email", "")
-    result["authors"] = [templates.Author(name, email)]
+    result["authors"] = [templates.Author(name, email)]  # type: ignore[call-arg]
 
     result["dependencies"] = templates.Dependency.all_from_string(result.pop("dependencies", ""))
 
     return result
 
 
-def prompt_do_proceed(default=True) -> bool:
+def prompt_do_proceed(default: bool = True) -> bool:
     questions = [
         {
             "type": "confirm",
@@ -147,7 +147,7 @@ def prompt_do_proceed(default=True) -> bool:
             "default": default,
         }
     ]
-    result = prompt(questions)
+    result = InquirerPy.prompt(questions)  # type: ignore[attr-defined]
     return result.get("proceed")
 
 
@@ -158,12 +158,12 @@ def semantic_version_validator(version: str, ndots: int) -> bool:
 
 
 class Action:
-    func: Callable
-    args: list
-    kwargs: dict
+    func: Callable[..., Any]
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any]
     children: list["Action"]
 
-    def __init__(self, func: Callable, *args: list, children: list["Action"] = None, **kwargs):
+    def __init__(self, func: Callable[..., Any], *args: Any, children: Optional[list["Action"]] = None, **kwargs: Any):
         if children is None:
             children = []
         self.func = func
@@ -171,18 +171,18 @@ class Action:
         self.kwargs = kwargs
         self.children = children
 
-    def then(self, *action: "Action"):
+    def then(self, *action: "Action") -> "Action":
         self.children.extend(action)
         return self
 
-    def execute(self):
+    def execute(self) -> None:
         # todo: add prefixed logger with msg=log.stack+{f.__name__}:{msg}
         self.func(*self.args, **self.kwargs)
         for action in self.children:
             action.execute()
 
 
-def mkpyp(dry=False, infile: str = None, outfile: str = None):
+def mkpyp(dry: bool = False, infile: str = None, outfile: str = None) -> None:  # type: ignore[assignment]
     """
     generate idiomatic python projects in subdirectory
 
@@ -209,31 +209,29 @@ def mkpyp(dry=False, infile: str = None, outfile: str = None):
             print("-" * 80)
             print(raw)
         else:
-            with open(outfile, "x", encoding="utf-8") as file:
-                file.write(raw)
+            with open(outfile, "x", encoding="utf-8") as f:
+                f.write(raw)
     else:
         print(raw)
         if prompt_do_proceed():
             generate(Path.cwd(), file.props, dry)
 
 
-def generate(pwd: Path, props: dict, testing: bool = True):
+def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
     if not pwd.exists():
         raise ValueError(f"parent directory does not exist: parent = {pwd}")
     name = str(props["name"])
     base = pwd / name
     req_base = base / "requirements"
 
-    def mock_mkdir(path: Path, *args, **kwargs):
-        del args, kwargs  # Unused.
-        print("=" * 80, file=sys.stdout)
-        print(f"Creating directory: {path}", file=sys.stdout)
+    def mkdir(path: Union[str, Path]) -> None:
+        if not testing:
+            os.mkdir(path)
+        else:
+            print("=" * 80, file=sys.stdout)
+            print(f"Creating directory: {path}", file=sys.stdout)
 
-    mkdir = mock_mkdir
-    if not testing:
-        mkdir = os.mkdir
-
-    def mkfile(path: Path):
+    def mkfile(path: Path) -> None:
         if not testing:
             path.open("x").close()
         else:
@@ -281,7 +279,7 @@ def generate(pwd: Path, props: dict, testing: bool = True):
     ).execute()
 
 
-def run():
+def run() -> None:
     fire.Fire(mkpyp, name="mkpyp")
 
 

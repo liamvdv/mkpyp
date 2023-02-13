@@ -21,7 +21,7 @@ class Dependency:
     op: Literal[">=", "==", "<="]  # two sided possible?
     version: Optional[str]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"'{self.name}{self.op or ''}{self.version or ''}'"
 
     @classmethod
@@ -34,11 +34,11 @@ class Dependency:
                 continue
             pkg_name, op, version = s.partition(operator)
             if op == operator:
-                return cls(pkg_name, op, version)
-        return cls(s, "", "")
+                return cls(pkg_name, op, version)  # type: ignore[call-arg] # dataclasses
+        return cls(s, "", "")  # type: ignore[call-arg] # dataclasses
 
     @classmethod
-    def all_from_string(cls, line: str) -> list[str]:
+    def all_from_string(cls, line: str) -> list["Dependency"]:
         deps = [cls.from_string(slug) for slug in line.split(" ")]
         return [dep for dep in deps if dep]  # smile
 
@@ -175,7 +175,7 @@ class PyprojectTomlProps(TypedDict):
     python_version: str
 
 
-def pyproject_toml(out: io.TextIOBase, props: PyprojectTomlProps):
+def pyproject_toml(out: io.TextIOBase, props: PyprojectTomlProps) -> None:
     NAME = props["name"]
     AUTHORS = ",\n\t".join(
         [
@@ -243,7 +243,7 @@ class SetupPyProps(TypedDict):
     dependencies: list[Dependency]
 
 
-def setup_py(out: io.TextIOBase, props: SetupPyProps):
+def setup_py(out: io.TextIOBase, props: SetupPyProps) -> None:
     DEPENDENCIES = ", ".join(str(dependency) for dependency in props["dependencies"])
     NAME = props["name"]
 
@@ -285,7 +285,7 @@ SOFTWARE.
 template_custom_license = "TODO(all): https://choosealicense.com/"
 
 
-def license(out: io.TextIOBase, props: LicenseProps):
+def license(out: io.TextIOBase, props: LicenseProps) -> None:
     AUTHORS = ", ".join([author.name for author in props["authors"]]) + " and other contributors"
     # FEATURE(liamvdv): inform users that they may need to update their license:
     #                   Either YYYY - YYYY or just YYYY format.
@@ -339,7 +339,7 @@ class VersionPyProps(TypedDict):
     # optional dependencies to be added by user.
 
 
-def version_py(out: io.TextIOBase, props: VersionPyProps):
+def version_py(out: io.TextIOBase, props: VersionPyProps) -> None:
     VERSION = str(props["version"])
 
     raw = template_version_py.substitute(VERSION=VERSION)
@@ -428,7 +428,7 @@ class MakefileProps(TypedDict):
     name: str
 
 
-def makefile(out: io.TextIOBase, props: MakefileProps):
+def makefile(out: io.TextIOBase, props: MakefileProps) -> None:
     NAME = props["name"]
 
     raw = template_makefile.substitute(NAME=NAME)
@@ -466,7 +466,7 @@ repos:
 # TODO: coverage tool
 
 
-def pre_commit_config_yaml(out: io.TextIOBase, props: AnyProps):
+def pre_commit_config_yaml(out: io.TextIOBase, props: AnyProps) -> None:
     del props  # Unused.
     raw = template_pre_commit_config_yaml.substitute()
     out.write(raw)
@@ -506,7 +506,7 @@ class GitignoreProps(TypedDict):
     name: str
 
 
-def gitignore(out: io.TextIOBase, props: GitignoreProps):
+def gitignore(out: io.TextIOBase, props: GitignoreProps) -> None:
     NAME = props["name"]
     raw = template_gitignore.substitute(NAME=NAME)
     out.write(raw)
@@ -522,7 +522,7 @@ template_requirements_all_txt = Template(
 )
 
 
-def requirements_all_txt(out: io.TextIOBase, props: AnyProps):
+def requirements_all_txt(out: io.TextIOBase, props: AnyProps) -> None:
     del props  # Unused.
     raw = template_requirements_all_txt.substitute()
     out.write(raw)
@@ -541,7 +541,7 @@ mypy
 )
 
 
-def requirements_linting_in(out: io.TextIOBase, props: AnyProps):
+def requirements_linting_in(out: io.TextIOBase, props: AnyProps) -> None:
     del props  # Unused.
     raw = template_requirements_linting_in.substitute()
     out.write(raw)
@@ -556,7 +556,7 @@ pytest
 )
 
 
-def requirements_testing_in(out: io.TextIOBase, props: AnyProps):
+def requirements_testing_in(out: io.TextIOBase, props: AnyProps) -> None:
     del props  # Unused.
     raw = template_requirements_testing_in.substitute()
     out.write(raw)
@@ -613,7 +613,7 @@ class ReadmeMdProps(TypedDict):
     description: str
 
 
-def readme_md(out: io.TextIOBase, props: ReadmeMdProps):
+def readme_md(out: io.TextIOBase, props: ReadmeMdProps) -> None:
     NAME = props["name"]
     DESCRIPTION = props["description"]
 
@@ -621,7 +621,7 @@ def readme_md(out: io.TextIOBase, props: ReadmeMdProps):
     out.write(raw)
 
 
-class TemplateProps(
+class TemplateProps(  # type: ignore[misc]
     PyprojectTomlProps,
     SetupPyProps,
     LicenseProps,
@@ -641,14 +641,14 @@ class TemplateFile(BaseModel):
         extra = "ignore"
 
 
-def generate_file(path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps):
+def generate_file(path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps) -> None:
     with path.open("x", encoding="utf-8") as file:
         templator(file, props)
 
 
-def generate_output(path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps):
+def generate_output(path: Path, templator: Callable[[io.TextIOBase, object], None], props: TemplateProps) -> None:
     print("=" * 80)
     print(f"Writing {path}:")
     print("-" * 80)
-    templator(sys.stdout, props)
+    templator(sys.stdout, props)  # type: ignore[arg-type]
     print()
