@@ -606,7 +606,7 @@ We generate the requirements files with `make refresh-requirements`. Reinstall w
 Build the project with `hatch build`.
 Now run `hatch publish --repo test` to upload the package to `test.pypi.org`.
 Use `hatch publish --repo main` to upload to the production PyPI.
-Define custom targets as per definied [here](https://hatch.pypa.io/latest/publish/#repository).
+Define custom targets as per defined [here](https://hatch.pypa.io/latest/publish/#repository).
 """.strip()
 )
 
