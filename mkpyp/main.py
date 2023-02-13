@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 from typing import Callable, get_args, Optional
-import templates  # todo: make full path
+from mkpyp import templates  # todo: make full path
 import os
 import sys
 from pathlib import Path
@@ -182,45 +182,39 @@ class Action:
             action.execute()
 
 
-class Mkpyp(object):
+def mkpyp(dry=False, infile: str=None, outfile: str=None):
     """
-        Generates a new idiomatic Python project for linux/macos:
-        project structure - .gitignore, LICENSE
-        format - black, isort
-        lint - ruff, mypy, black
-        test - pytest, coverage
-        other - pre-commit, Makefile, version.py, requirements
+    generate idiomatic python project in subdirectory 
+
+    Parameters
+    ----------
+    infile
+        load from filepath
+    outfile
+        write to filepath; do not generate
+    dry
+        no sideeffects, print actions to stdout
     """
-    def __init__(self):
-        pass
+    print("Abort with ctrl + c\n")
+    if isinstance(infile, str):
+        file = templates.TemplateFile.parse_file(infile)
+    else:
+        props = promp_user()
+        file = templates.TemplateFile(props=props)
 
-    def init(self, dry=False, infile: Optional[str]=None, outfile: Optional[str]=None):
-        """
-        prompt user input and generates project in subdirectory 
-        infile - load from template.json
-        outfile - write a template.json; do not generate
-        dry - no sideeffects, print output to stdout
-        """
-        print("Abort with ctrl + c\n")
-        if isinstance(infile, str):
-            file = templates.TemplateFile.parse_file(infile)
-        else:
-            props = promp_user()
-            file = templates.TemplateFile(props=props)
-
-        raw = file.json(indent=4)
-        if isinstance(outfile, str):
-            if dry:
-                print(f"Writing {outfile}:")
-                print("-" * 80)
-                print(raw) 
-            else: 
-                with open(outfile, "x", encoding="utf-8") as file:
-                    file.write(raw)
-        else:
-            print(raw)
-            if prompt_do_proceed():
-                generate(Path.cwd(), file.props, dry)
+    raw = file.json(indent=4)
+    if isinstance(outfile, str):
+        if dry:
+            print(f"Writing {outfile}:")
+            print("-" * 80)
+            print(raw) 
+        else: 
+            with open(outfile, "x", encoding="utf-8") as file:
+                file.write(raw)
+    else:
+        print(raw)
+        if prompt_do_proceed():
+            generate(Path.cwd(), file.props, dry)
 
 def generate(pwd: Path, props: dict, testing: bool = True):
     if not pwd.exists():
@@ -281,6 +275,8 @@ def generate(pwd: Path, props: dict, testing: bool = True):
         ),
     ).execute()
 
+def run():
+    fire.Fire(mkpyp, name="mkpyp")
 
 if __name__ == "__main__":
-    fire.Fire(Mkpyp(), name="mkpyp")
+    run()

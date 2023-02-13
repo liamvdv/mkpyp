@@ -1,8 +1,16 @@
 # mkpyp
 make python projects idiomatically
+```
+Generates a new idiomatic Python project for linux/macos:
+project structure - .gitignore, LICENSE
+format - black, isort
+lint - ruff, mypy, black
+test - pytest, coverage
+other - pre-commit, Makefile, version.py, requirements
+```
 
 ## Installation
-
+Install with `pip3 install mypyp`. Run with `mypyp`.
 
 ## Developer Installation
 After cloning this repo or initializing a new git repository with `git init`, complete the following steps at root directory.
