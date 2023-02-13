@@ -1,6 +1,6 @@
 __all__ = "VERSION", "version_info"
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 # OPTDEP: Add optional dependencies for your users here, e. g. 'devtools', 'typing-extensions'.
 opt_in_dependencies: list[str] = []
