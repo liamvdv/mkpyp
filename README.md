@@ -10,7 +10,7 @@ other - pre-commit, Makefile, version.py, requirements
 ```
 
 ## Installation
-Install with `pip3 install mypyp`. Run with `mypyp`.
+Install with `pip3 install mkpyp`. Run with `mkpyp`.
 
 ## Developer Installation
 After cloning this repo or initializing a new git repository with `git init`, complete the following steps in root directory.
