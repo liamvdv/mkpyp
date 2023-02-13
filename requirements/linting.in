@@ -1,0 +1,6 @@
+# Only specify development requirements here.
+pre-commit
+black
+isort
+ruff
+mypy

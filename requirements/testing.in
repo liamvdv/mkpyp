@@ -1,0 +1,3 @@
+# Only specify testing requirements here.
+coverage[toml]
+pytest
