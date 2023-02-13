@@ -13,7 +13,7 @@ other - pre-commit, Makefile, version.py, requirements
 Install with `pip3 install mypyp`. Run with `mypyp`.
 
 ## Developer Installation
-After cloning this repo or initializing a new git repository with `git init`, complete the following steps at root directory.
+After cloning this repo or initializing a new git repository with `git init`, complete the following steps in root directory.
 ```shell
 # create a new virtual environment (e. g. venv)
 python3 -m venv .venv
@@ -22,7 +22,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # install pip-compile for auto-generating requirement files
-pip install pip-tools
+pip install pip-tools hatch
 
 # generate requirement files
 make refresh-requirements
