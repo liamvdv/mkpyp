@@ -230,7 +230,8 @@ sys.exit(1)
 
 setup(
     name='$NAME',
-    # DEP: pyproject.toml is the authorative source for dependencies. Update the line below to support GitHub metadata indexing. 
+    # DEP: pyproject.toml is the authorative source for dependencies. 
+    #      Update the line below to support GitHub metadata indexing. 
     install_requires=[$DEPENDENCIES],
 )
 """.strip()
@@ -571,7 +572,8 @@ $DESCRIPTION
 
 
 ## Developer Installation
-After cloning this repo or initializing a new git repository with `git init`, complete the following steps at root directory.
+Follow the below steps are cloning or creating a new git repository with `git init`.
+Make sure you are in the root directory of your project.
 ```shell
 # create a new virtual environment (e. g. venv)
 python3 -m venv .venv

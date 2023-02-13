@@ -5,14 +5,13 @@ import string
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Optional, get_args
+from typing import Callable, get_args
 
 import fire
 from InquirerPy import prompt
 from InquirerPy.validator import EmptyInputValidator
-from pydantic import BaseModel
 
-from mkpyp import templates  # todo: make full path
+from mkpyp import templates
 
 # TODO(liamvdv): start actually supporting automatic ChangeLog generation.
 
@@ -51,7 +50,9 @@ def promp_user() -> templates.TemplateProps:
             "name": "name",
             "message": "Project Name:",
             "validate": name_validator,
-            "invalid_message": f"invalid python name: must start with a lowercase letter and only contain [{name_alphabet}]",
+            "invalid_message": (
+                "invalid python name: must start with a lowercase letter and only contain [{name_alphabet}]"
+            ),
         },
         {
             "type": "input",
@@ -105,7 +106,7 @@ def promp_user() -> templates.TemplateProps:
             "type": "input",
             "name": "source_url",
             "message": "Source Url:",
-            "default": f"https://github.com/",
+            "default": "https://github.com/",
         },
         {
             "type": "input",
@@ -228,10 +229,20 @@ def generate(pwd: Path, props: dict, testing: bool = True):
         print("=" * 80, file=sys.stdout)
         print(f"Creating directory: {path}", file=sys.stdout)
 
-    mkdir = os.mkdir if not testing else mock_mkdir
-    filewriter = templates.generate_file if not testing else templates.generate_output
+    mkdir = mock_mkdir
+    if not testing:
+        mkdir = os.mkdir
 
-    mkfile = lambda p: p.open("x").close() if not testing else lambda p: print(f"Creating file: {p}")
+    def mkfile(path: Path):
+        if not testing:
+            path.open("x").close()
+        else:
+            print(f"Creating file: {path}")
+
+    filewriter = templates.generate_file
+    if not testing:
+        filewriter = templates.generate_output
+
     Action(mkdir, str(base)).then(
         Action(mkdir, str(base / name)).then(
             Action(mkfile, base / name / "main.py"),
