@@ -351,13 +351,18 @@ template_makefile = Template(
     """
 sources = $NAME tests
 
+# https://hatch.pypa.io/dev/version/#updating
+.PHONY: bump
+bump:
+\thatch version patch
+
 .PHONY: bump-minor
 bump-minor:
-\techo "Not Implemented Yet"
+\thatch version minor
 
 .PHONY: bump-major
 bump-major:
-\techo "Not Implemented Yet"
+\thatch version major
 
 .PHONY: install
 install:

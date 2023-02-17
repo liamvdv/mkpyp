@@ -1,12 +1,17 @@
 sources = mkpyp tests
 
+# https://hatch.pypa.io/dev/version/#updating
+.PHONY: bump
+bump:
+	hatch version patch
+
 .PHONY: bump-minor
 bump-minor:
-	echo "Not Implemented Yet"
+	hatch version minor
 
 .PHONY: bump-major
 bump-major:
-	echo "Not Implemented Yet"
+	hatch version major
 
 .PHONY: install
 install:
