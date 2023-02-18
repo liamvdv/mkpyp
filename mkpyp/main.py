@@ -15,7 +15,6 @@ from mkpyp import templates
 
 # TODO(liamvdv): start actually supporting automatic ChangeLog generation.
 
-
 def get_git_config() -> dict[str, str]:
     data = {}
     res = subprocess.run(["git", "config", "--list"], stdout=subprocess.PIPE)
@@ -187,8 +186,7 @@ class Action:
         for action in self.children:
             action.execute()
 
-
-def mkpyp(dry: bool = False, infile: str = None, outfile: str = None) -> None:  # type: ignore[assignment]
+def mkpyp(*args: Any, dry: bool = False, infile: str = None, outfile: str = None) -> None:  # type: ignore[assignment]
     """
     generate idiomatic python projects in subdirectory
 
@@ -201,6 +199,9 @@ def mkpyp(dry: bool = False, infile: str = None, outfile: str = None) -> None:  
     dry
         no sideeffects, print actions to stdout
     """
+    if args:
+        print("mkpyp does not support arguments")
+        exit(1)
     print("Abort with ctrl + c\n")
     if isinstance(infile, str):
         file = templates.TemplateFile.parse_file(infile)
@@ -298,3 +299,4 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
+
