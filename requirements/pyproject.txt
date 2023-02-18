@@ -18,7 +18,7 @@ six==1.16.0
     # via fire
 termcolor==2.2.0
     # via fire
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via pydantic
 wcwidth==0.2.6
     # via prompt-toolkit
