@@ -61,11 +61,25 @@ def promp_user() -> templates.TemplateProps:
         },
         {
             "type": "input",
-            "name": "version",
-            "message": "Project Version:",
-            "default": "0.1.0",
-            "validate": lambda v: semantic_version_validator(v, 2),
-            "invalid_message": "must be Major.Minor.Patch all digits",
+            "name": "dependencies",
+            "message": "Dependencies (space separated):",
+            "default": "",
+        },
+        {
+            "type": "input",
+            "name": "python_version",
+            "message": "Python Version:",
+            "default": lambda _: get_python_version(),
+            "validate": lambda v: semantic_version_validator(v, 1),
+            "invalid_message": "must be Major.Minor all digits",
+        },
+        {
+            "type": "list",
+            "name": "license_type",
+            "multiselect": False,
+            "choices": get_args(templates.TemplateProps.__annotations__.get("license_type")),
+            "message": "License:",
+            "default": "MIT",
         },
         {
             "type": "input",
@@ -82,49 +96,41 @@ def promp_user() -> templates.TemplateProps:
         },
         {
             "type": "input",
-            "name": "python_version",
-            "message": "Python Version:",
-            "default": lambda _: get_python_version(),
-            "validate": lambda v: semantic_version_validator(v, 1),
-            "invalid_message": "must be Major.Minor all digits",
+            "name": "gh_owner",
+            "message": "GitHub Repo Owner:",
+            "validate": EmptyInputValidator(),
         },
         {
             "type": "input",
-            "name": "dependencies",
-            "message": "Dependencies (space separated):",
-            "default": "",
-        },
-        {
-            "type": "list",
-            "name": "license_type",
-            "multiselect": False,
-            "choices": get_args(templates.TemplateProps.__annotations__.get("license_type")),
-            "message": "License:",
-            "default": "MIT",
+            "name": "version",
+            "message": "Project Version:",
+            "default": "0.1.0",
+            "validate": lambda v: semantic_version_validator(v, 2),
+            "invalid_message": "must be Major.Minor.Patch all digits",
         },
         {
             "type": "input",
             "name": "source_url",
             "message": "Source Url:",
-            "default": "https://github.com/",
-        },
-        {
-            "type": "input",
-            "name": "homepage_url",
-            "message": "Homepage Url:",
-            "default": lambda result: result.get("source_url", ""),
+            "default": lambda answers: f"https://github.com/{answers.get('gh_owner', '')}/{answers.get('name', '')}",
         },
         {
             "type": "input",
             "name": "documentation_url",
             "message": "Documentation Url:",
-            "default": lambda result: result.get("source_url", ""),
+            "default": lambda answers: f"https://{answers.get('gh_owner', '')}.github.io/{answers.get('name', '')}",
+        },
+        {
+            "type": "input",
+            "name": "homepage_url",
+            "message": "Homepage Url:",
+            "default": lambda answers: answers.get("documentation_url", ""),
         },
         {
             "type": "input",
             "name": "changelog_url",
             "message": "Changelog Url:",
-            "default": lambda result: result.get("source_url", ""),
+            "default": lambda result: result.get("documentation_url", ""),
         },
     ]
     result = InquirerPy.prompt(questions)  # type: ignore[attr-defined]
@@ -223,6 +229,7 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
     name = str(props["name"])
     base = pwd / name
     req_base = base / "requirements"
+    docs_base = base / "docs"
 
     def mkdir(path: Union[str, Path]) -> None:
         if not testing:
@@ -260,6 +267,7 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
                 templates.requirements_testing_in,
                 props,
             ),
+            Action(filewriter, req_base / "docs.in", templates.requirements_docs_in, props),
             # req_base / pyproject.txt is generated from pyproject.
             Action(filewriter, req_base / "all.txt", templates.requirements_all_txt, props),
         ),
@@ -275,6 +283,11 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
             base / ".pre-commit-config.yaml",
             templates.pre_commit_config_yaml,
             props,
+        ),
+        # docs
+        Action(filewriter, base / "mkdocs.yml", templates.mkdocs_yml, props),
+        Action(mkdir, docs_base).then(
+            Action(filewriter, docs_base / "index.md", templates.docs_index_md, props),
         ),
     ).execute()
 

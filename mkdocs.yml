@@ -1,0 +1,25 @@
+# For customizations see https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/
+# inspiration https://github.com/pypa/hatch/blob/master/mkdocs.yml, https://github.com/pypa/hatch/blob/master/mkdocs.yml
+site_name: mkpyp
+repo_name: liamvdv/mkpyp
+site_description: make idiomatic python projects 
+site_url: https://liamvdv.github.io/mkpyp
+repo_url: https://github.com/liamvdv/mkpyp
+edit_uri: blob/master/docs
+copyright: "Copyright &copy; $name $YEARSPAN-present"
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+- search

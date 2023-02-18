@@ -376,7 +376,8 @@ refresh-requirements:
 \tfind requirements/ -name '*.txt' ! -name 'all.txt' -type f -delete 
 \tpip-compile -q --resolver backtracking -o requirements/linting.txt requirements/linting.in
 \tpip-compile -q --resolver backtracking -o requirements/testing.txt requirements/testing.in
-\tpip-compile -q --resolver backtracking -o requirements/pyproject.txt pyproject.toml\t
+\tpip-compile -q --resolver backtracking -o requirements/pyproject.txt pyproject.toml
+\tpip-compile -q --resolver backtracking -o requirements/docs.txt requirements/docs.in
 \t# OPTDEP: make sure to also recompile requirements for optional dependencies, e. g. for slug
 \t# pip-compile -q --resolver backtracking -o requirements/pyproject+slug.txt pyproject.toml --extra=slug
 
@@ -426,6 +427,18 @@ clean:
 \trm -f .coverage
 \trm -f .coverage.*
 \trm -rf htmlcov
+
+.PHONY: docs
+docs:
+\tmkdocs serve --dev-addr localhost:8000
+
+.PHONY: build-docs
+build-docs:
+\tmkdocs build --clean --strict
+
+.PHONY: deploy-docs
+deploy-docs:
+\tmkdocs gh-deploy
 """.strip()
 )
 
@@ -568,6 +581,19 @@ def requirements_testing_in(out: io.TextIOBase, props: AnyProps) -> None:
     out.write(raw)
 
 
+template_requirements_docs_in = Template(
+    """
+mkdocs-material
+""".strip()
+)
+
+
+def requirements_docs_in(out: io.TextIOBase, props: AnyProps) -> None:
+    del props  # Unused.
+    raw = template_requirements_docs_in.substitute()
+    out.write(raw)
+
+
 # TODO(liamvdv)
 template_readme_md = Template(
     """
@@ -629,6 +655,108 @@ def readme_md(out: io.TextIOBase, props: ReadmeMdProps) -> None:
     out.write(raw)
 
 
+# Input
+# Declare number of needed attributes and check if they are already present in given props.
+# Ask more questions if needed, store the result in plugin specific store (prevent conflicts in plugins)
+
+# Also require additional dependencies in docs.in
+# How it works
+# mkdocs new . # in root directory
+# mkdocs serve
+# mkdocs build [options]
+# mkdocs gh-deploy (will overwrite gh-pages)
+
+# custom domain must go into /docs/CNAME file
+
+template_mkdocs_yml = Template(
+    """
+# For customizations see https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/
+# inspiration https://github.com/pypa/hatch/blob/master/mkdocs.yml
+site_name: $NAME
+repo_name: $REPO_NAME
+site_description: $DESCRIPTION
+site_url: $SITE_URL
+repo_url: $REPO_URL
+edit_uri: blob/master/docs
+copyright: "Copyright &copy; $AUTHORS $YEARSPAN - present"
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+- search
+""".strip()
+)
+
+
+class MkdocsYmlProps(TypedDict):
+    name: str
+    documentation_url: str
+    source_url: str
+    description: str
+    authors: list[Author]
+
+
+def mkdocs_yml(out: io.TextIOBase, props: MkdocsYmlProps) -> None:
+    NAME = props["name"]
+    DESCRIPTION = props["description"]
+    REPO_URL = props["source_url"]
+    REPO_NAME = "/".join(props["source_url"].split("/")[-2:])
+    SITE_URL = props["documentation_url"]
+    AUTHORS = ", ".join([author.name for author in props["authors"]])
+    YEARSPAN = str(date.today().year)
+
+    raw = template_mkdocs_yml.substitute(
+        NAME=NAME,
+        DESCRIPTION=DESCRIPTION,
+        REPO_URL=REPO_URL,
+        SITE_URL=SITE_URL,
+        AUTHORS=AUTHORS,
+        YEARSPAN=YEARSPAN,
+        REPO_NAME=REPO_NAME,
+    )
+
+    out.write(raw)
+
+
+template_docs_index_md = Template(
+    """
+# Welcome to your documentation site!
+
+For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+
+## Commands
+
+* `mkdocs serve` - Start the live-reloading docs server.
+* `mkdocs build` - Build the documentation site.
+
+## Project layout
+
+    mkdocs.yml    # The configuration file.
+    docs/
+        index.md  # The documentation homepage.
+        ...       # Other markdown pages, images and other files.
+
+""".strip()
+)
+
+
+def docs_index_md(out: io.TextIOBase, props: AnyProps) -> None:
+    del props  # Unused.
+    raw = template_docs_index_md.substitute()
+    out.write(raw)
+
+
 class TemplateProps(  # type: ignore[misc]
     PyprojectTomlProps,
     SetupPyProps,
@@ -637,6 +765,7 @@ class TemplateProps(  # type: ignore[misc]
     MakefileProps,
     VersionPyProps,
     ReadmeMdProps,
+    MkdocsYmlProps,
 ):
     pass
 

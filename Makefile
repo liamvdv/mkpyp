@@ -25,6 +25,7 @@ refresh-requirements:
 	find requirements/ -name '*.txt' ! -name 'all.txt' -type f -delete 
 	pip-compile -q --resolver backtracking -o requirements/linting.txt requirements/linting.in
 	pip-compile -q --resolver backtracking -o requirements/testing.txt requirements/testing.in
+	pip-compile -q --resolver backtracking -o requirements/docs.txt requirements/docs.in
 	pip-compile -q --resolver backtracking -o requirements/pyproject.txt pyproject.toml	
 	# OPTDEP: make sure to also recompile requirements for optional dependencies, e. g. for slug
 	# pip-compile -q --resolver backtracking -o requirements/pyproject+slug.txt pyproject.toml --extra=slug
@@ -57,6 +58,18 @@ testcov: test
 
 .PHONY: all
 all: lint mypy testcov
+
+.PHONY: docs
+docs:
+	mkdocs serve --dev-addr localhost:8000
+
+.PHONY: build-docs
+build-docs:
+	mkdocs build --clean --strict
+
+.PHONY: deploy-docs
+deploy-docs:
+	mkdocs gh-deploy
 
 .PHONY: clean
 clean:
