@@ -27,6 +27,24 @@ def get_git_config() -> dict[str, str]:
     return data
 
 
+def is_available_pypi(name: str, cache: dict[str, bool] = {}) -> bool:
+    if name in cache:
+        return cache[name]
+    invalid_name_pattern = "ERROR: Invalid requirement:"
+    not_found_pattern = "ERROR: No matching distribution found for"
+
+    proc = subprocess.run(
+        ["pip3", "install", name, "--dry-run", "--no-color", "--disable-pip-version-check"],
+        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+    )
+    text = proc.stderr.strip().decode()
+    if invalid_name_pattern in text:
+        raise Exception("invalid pip name")
+    cache[name] = not_found_pattern in text
+    return cache[name]
+
+
 def get_python_version() -> str:
     """returns Major.Minor Python version, e. g. 3.10"""
     mmp = sys.version.split(" ")[0]
@@ -75,7 +93,15 @@ def promp_user() -> templates.TemplateProps:
             "message": "Project Name (PyPI):",
             "default": lambda answers: normalized_pypi_name(answers.get("package_name", "")),
             "validate": is_normalized_pypi,
-            "invalid_message": (f"must be a PyPI normalized name, only including characters [{name_alphabet_pypi}]"),
+            "invalid_message": f"includes letters other than [{name_alphabet_pypi}] or PyPI name isn't free",
+        },
+        {
+            "type": "confirm",
+            "name": "-",
+            "message": "PyPI Name is already taken. Continue anyway?",
+            "when": lambda answers: not is_available_pypi(answers.get("pypi_name")),
+            "default": False,
+            "filter": lambda proceed: True if proceed else exit(0),
         },
         {
             "type": "input",
