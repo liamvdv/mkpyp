@@ -1,11 +1,11 @@
 from __future__ import print_function, unicode_literals
 
-import os
+import re
 import string
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Callable, Optional, Union, get_args
+from typing import Any, Callable, Optional, get_args
 
 import fire  # type: ignore[import]
 import InquirerPy
@@ -34,11 +34,26 @@ def get_python_version() -> str:
     return mm
 
 
-name_alphabet = string.ascii_lowercase + string.digits + "_-"
+def normalized_pypi_name(name: str) -> str:
+    """normalize package name to project name as per PEP 508
+    See https://packaging.python.org/en/latest/specifications/name-normalization/"""
+    return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def name_validator(name: str) -> bool:
-    return len(name) > 0 and name[0] in string.ascii_lowercase and all([char in name_alphabet for char in name])
+name_alphabet_pypi = string.ascii_lowercase + string.digits + "-"
+# disallow dots for top level name
+name_alphabet_identifer = string.ascii_lowercase + string.digits + "_"
+
+
+def is_normalized_pypi(name: str) -> bool:
+    return len(name) > 0 and all([char in name_alphabet_pypi for char in name])
+
+
+def is_valid_identifier(name: str) -> bool:
+    """package name must be a valid python identifier"""
+    return (
+        len(name) > 0 and name[0] in string.ascii_lowercase and all([char in name_alphabet_identifer for char in name])
+    )
 
 
 def promp_user() -> templates.TemplateProps:
@@ -47,12 +62,20 @@ def promp_user() -> templates.TemplateProps:
     questions: list[dict[str, Any]] = [
         {
             "type": "input",
-            "name": "name",
-            "message": "Project Name:",
-            "validate": name_validator,
+            "name": "package_name",
+            "message": "Package Name:",
+            "validate": is_valid_identifier,
             "invalid_message": (
-                "invalid python name: must start with a lowercase letter and only contain [{name_alphabet}]"
+                f"must be a valid python identifier, only include characters [{name_alphabet_identifer}]"
             ),
+        },
+        {
+            "type": "input",
+            "name": "pypi_name",
+            "message": "Project Name (PyPI):",
+            "default": lambda answers: normalized_pypi_name(answers.get("package_name", "")),
+            "validate": is_normalized_pypi,
+            "invalid_message": (f"must be a PyPI normalized name, only including characters [{name_alphabet_pypi}]"),
         },
         {
             "type": "input",
@@ -112,13 +135,13 @@ def promp_user() -> templates.TemplateProps:
             "type": "input",
             "name": "source_url",
             "message": "Source Url:",
-            "default": lambda answers: f"https://github.com/{answers.get('gh_owner', '')}/{answers.get('name', '')}",
+            "default": lambda answers: f"https://github.com/{answers.get('gh_owner')}/{answers.get('pypi_name', '')}",
         },
         {
             "type": "input",
             "name": "documentation_url",
             "message": "Documentation Url:",
-            "default": lambda answers: f"https://{answers.get('gh_owner', '')}.github.io/{answers.get('name', '')}",
+            "default": lambda answers: f"https://{answers.get('gh_owner')}.github.io/{answers.get('pypi_name', '')}",
         },
         {
             "type": "input",
@@ -229,14 +252,12 @@ def mkpyp(*args: Any, dry: bool = False, infile: str = None, outfile: str = None
 def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
     if not pwd.exists():
         raise ValueError(f"parent directory does not exist: parent = {pwd}")
-    name = str(props["name"])
-    base = pwd / name
-    req_base = base / "requirements"
-    docs_base = base / "docs"
+    pypi_name = props["pypi_name"]
+    package_name = props["package_name"]
 
-    def mkdir(path: Union[str, Path]) -> None:
+    def mkdir(path: Path) -> None:
         if not testing:
-            os.mkdir(path)
+            path.mkdir()
         else:
             print("=" * 80, file=sys.stdout)
             print(f"Creating directory: {path}", file=sys.stdout)
@@ -251,13 +272,17 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
     if not testing:
         filewriter = templates.generate_file
 
-    Action(mkdir, str(base)).then(
-        Action(mkdir, str(base / name)).then(
-            Action(mkfile, base / name / "main.py"),
-            Action(mkfile, base / name / "__init__.py"),
-            Action(filewriter, base / name / "version.py", templates.version_py, props),
+    base = pwd / pypi_name
+    pkg_base = base / package_name
+    req_base = base / "requirements"
+    docs_base = base / "docs"
+    Action(mkdir, base).then(
+        Action(mkdir, pkg_base).then(
+            Action(mkfile, pkg_base / "main.py"),
+            Action(mkfile, pkg_base / "__init__.py"),
+            Action(filewriter, pkg_base / "version.py", templates.version_py, props),
         ),
-        Action(mkdir, str(req_base)).then(
+        Action(mkdir, req_base).then(
             Action(
                 filewriter,
                 req_base / "linting.in",
@@ -274,7 +299,7 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
             # req_base / pyproject.txt is generated from pyproject.
             Action(filewriter, req_base / "all.txt", templates.requirements_all_txt, props),
         ),
-        Action(mkdir, str(base / "tests")),
+        Action(mkdir, base / "tests"),
         Action(filewriter, base / "pyproject.toml", templates.pyproject_toml, props),
         Action(filewriter, base / "setup.py", templates.setup_py, props),
         Action(filewriter, base / "README.md", templates.readme_md, props),
@@ -287,7 +312,6 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
             templates.pre_commit_config_yaml,
             props,
         ),
-        # docs
         Action(filewriter, base / "mkdocs.yml", templates.mkdocs_yml, props),
         Action(mkdir, docs_base).then(
             Action(filewriter, docs_base / "index.md", templates.docs_index_md, props),

@@ -6,7 +6,7 @@ site_description: make idiomatic python projects
 site_url: https://liamvdv.github.io/mkpyp
 repo_url: https://github.com/liamvdv/mkpyp
 edit_uri: blob/master/docs
-copyright: "Copyright &copy; $name $YEARSPAN-present"
+copyright: "Copyright &copy; Liam van der Viven 2023-present"
 theme:
   name: material
   features:

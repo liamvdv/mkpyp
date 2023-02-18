@@ -54,20 +54,20 @@ requires = ['hatchling']
 build-backend = 'hatchling.build'
 
 [tool.hatch.version]
-path = '$NAME/version.py'
+path = '$PACKAGE_NAME/version.py'
 
 [tool.hatch.build.targets.sdist]
 # limit which files are included in the sdist (.tar.gz) asset
 include = [
     '/README.md',
     '/Makefile',
-    '/$NAME',
+    '/$PACKAGE_NAME',
     '/tests',
     '/requirements',
 ]
 
 [project]
-name = '$NAME'
+name = '$PYPI_NAME'
 description = '$DESCRIPTION'
 authors = [$AUTHORS]
 license = {file = 'LICENSE'}
@@ -87,7 +87,7 @@ dependencies = [$DEPENDENCIES]
 # OPTDEP: Define opt-in dependencies here. Also grep over the code base to see other places that might need change.
 #         Example: With
 #               optional-dependencies = { slug = ['python-dotenv>=0.10.4'] }
-#         Users can install $NAME[slug] to also install python-dotenv
+#         Users can install $PYPI_NAME[slug] to also install python-dotenv
 optional-dependencies = { }
 dynamic = ['version']
 
@@ -120,7 +120,7 @@ target-version = ['py310'] # default
 
 [tool.isort]
 line_length = 120
-known_first_party = '$NAME'
+known_first_party = '$PACKAGE_NAME'
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0
@@ -146,7 +146,7 @@ disallow_untyped_calls = true
 disallow_untyped_defs = true
 
 [tool.coverage.run]
-source = ['$NAME']
+source = ['$PACKAGE_NAME']
 branch = true
 # no context set
 
@@ -162,7 +162,8 @@ exclude_lines = [
 
 
 class PyprojectTomlProps(TypedDict):
-    name: str
+    package_name: str
+    pypi_name: str
     description: str
     authors: list[Author]
     homepage_url: str
@@ -176,7 +177,8 @@ class PyprojectTomlProps(TypedDict):
 
 
 def pyproject_toml(out: io.TextIOBase, props: PyprojectTomlProps) -> None:
-    NAME = props["name"]
+    PYPI_NAME = props["pypi_name"]
+    PACKAGE_NAME = props["package_name"]
     AUTHORS = ",\n\t".join(
         [
             "{{name = '{name}', email = '{email}'}}".format(name=author.name, email=author.email)
@@ -193,7 +195,8 @@ def pyproject_toml(out: io.TextIOBase, props: PyprojectTomlProps) -> None:
     DEPENDENCIES = ", ".join(str(dependency) for dependency in props["dependencies"])
 
     raw = template_pyproject_toml.substitute(
-        NAME=NAME,
+        PYPI_NAME=PYPI_NAME,
+        PACKAGE_NAME=PACKAGE_NAME,
         AUTHORS=AUTHORS,
         HOMEPAGE_URL=HOMEPAGE_URL,
         SOURCE_URL=SOURCE_URL,
@@ -215,7 +218,7 @@ sys.stderr.write(\"""
 ===============================
 Unsupported installation method
 ===============================
-$NAME no longer supports installation with `python setup.py install`.
+$PYPI_NAME no longer supports installation with `python setup.py install`.
 Please use `python -m pip install .` instead.
 \"""
 )
@@ -229,7 +232,7 @@ sys.exit(1)
 # To be removed once GitHub catches up.
 
 setup(
-    name='$NAME',
+    name='$PYPI_NAME',
     # DEP: pyproject.toml is the authorative source for dependencies.
     #      Update the line below to support GitHub metadata indexing.
     install_requires=[$DEPENDENCIES],
@@ -239,15 +242,15 @@ setup(
 
 
 class SetupPyProps(TypedDict):
-    name: str
+    pypi_name: str
     dependencies: list[Dependency]
 
 
 def setup_py(out: io.TextIOBase, props: SetupPyProps) -> None:
     DEPENDENCIES = ", ".join(str(dependency) for dependency in props["dependencies"])
-    NAME = props["name"]
+    PYPI_NAME = props["pypi_name"]
 
-    raw = template_setup_py.substitute(DEPENDENCIES=DEPENDENCIES, NAME=NAME)
+    raw = template_setup_py.substitute(DEPENDENCIES=DEPENDENCIES, PYPI_NAME=PYPI_NAME)
     out.write(raw)
 
 
@@ -349,7 +352,7 @@ def version_py(out: io.TextIOBase, props: VersionPyProps) -> None:
 # NOTE(liamvdv): $$() is NOT Makefile syntax. Double dollar sign is the escape sequence for string.Template
 template_makefile = Template(
     """
-sources = $NAME tests
+sources = $PACKAGE_NAME tests
 
 # https://hatch.pypa.io/dev/version/#updating
 .PHONY: bump
@@ -444,13 +447,13 @@ deploy-docs:
 
 
 class MakefileProps(TypedDict):
-    name: str
+    package_name: str
 
 
 def makefile(out: io.TextIOBase, props: MakefileProps) -> None:
-    NAME = props["name"]
+    PACKAGE_NAME = props["package_name"]
 
-    raw = template_makefile.substitute(NAME=NAME)
+    raw = template_makefile.substitute(PACKAGE_NAME=PACKAGE_NAME)
     out.write(raw)
 
 
@@ -511,8 +514,8 @@ dist/
 /htmlcov/
 .vscode/
 _build/
-$NAME/*.c
-$NAME/*.so
+$PACKAGE_NAME/*.c
+$PACKAGE_NAME/*.so
 .auto-format
 /codecov.sh
 /worktrees/
@@ -522,12 +525,12 @@ $NAME/*.so
 
 
 class GitignoreProps(TypedDict):
-    name: str
+    package_name: str
 
 
 def gitignore(out: io.TextIOBase, props: GitignoreProps) -> None:
-    NAME = props["name"]
-    raw = template_gitignore.substitute(NAME=NAME)
+    PACKAGE_NAME = props["package_name"]
+    raw = template_gitignore.substitute(PACKAGE_NAME=PACKAGE_NAME)
     out.write(raw)
 
 
@@ -537,6 +540,7 @@ template_requirements_all_txt = Template(
 -r ./pyproject.txt
 -r ./linting.txt
 -r ./testing.txt
+-r ./docs.txt
 """.strip()
 )
 
@@ -597,7 +601,7 @@ def requirements_docs_in(out: io.TextIOBase, props: AnyProps) -> None:
 # TODO(liamvdv)
 template_readme_md = Template(
     """
-# $NAME
+# $PYPI_NAME
 $DESCRIPTION
 
 ## Installation
@@ -619,7 +623,7 @@ pip install pip-tools
 # generate requirement files
 make refresh-requirements
 
-# install the requirements and install '$NAME' as editable package
+# install the requirements and install '$PYPI_NAME' as editable package
 make install
 ```
 
@@ -645,15 +649,15 @@ Define custom targets as per defined [here](https://hatch.pypa.io/latest/publish
 
 
 class ReadmeMdProps(TypedDict):
-    name: str
+    pypi_name: str
     description: str
 
 
 def readme_md(out: io.TextIOBase, props: ReadmeMdProps) -> None:
-    NAME = props["name"]
+    PYPI_NAME = props["pypi_name"]
     DESCRIPTION = props["description"]
 
-    raw = template_readme_md.substitute(NAME=NAME, DESCRIPTION=DESCRIPTION)
+    raw = template_readme_md.substitute(PYPI_NAME=PYPI_NAME, DESCRIPTION=DESCRIPTION)
     out.write(raw)
 
 
@@ -674,7 +678,7 @@ template_mkdocs_yml = Template(
     """
 # For customizations see https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/
 # inspiration https://github.com/pypa/hatch/blob/master/mkdocs.yml
-site_name: $NAME
+site_name: $PYPI_NAME
 repo_name: $REPO_NAME
 site_description: $DESCRIPTION
 site_url: $SITE_URL
@@ -702,7 +706,7 @@ plugins:
 
 
 class MkdocsYmlProps(TypedDict):
-    name: str
+    pypi_name: str
     documentation_url: str
     source_url: str
     description: str
@@ -710,7 +714,7 @@ class MkdocsYmlProps(TypedDict):
 
 
 def mkdocs_yml(out: io.TextIOBase, props: MkdocsYmlProps) -> None:
-    NAME = props["name"]
+    PYPI_NAME = props["pypi_name"]
     DESCRIPTION = props["description"]
     REPO_URL = props["source_url"]
     REPO_NAME = "/".join(props["source_url"].split("/")[-2:])
@@ -719,7 +723,7 @@ def mkdocs_yml(out: io.TextIOBase, props: MkdocsYmlProps) -> None:
     YEARSPAN = str(date.today().year)
 
     raw = template_mkdocs_yml.substitute(
-        NAME=NAME,
+        PYPI_NAME=PYPI_NAME,
         DESCRIPTION=DESCRIPTION,
         REPO_URL=REPO_URL,
         SITE_URL=SITE_URL,
