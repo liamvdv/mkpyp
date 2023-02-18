@@ -763,6 +763,40 @@ def docs_index_md(out: io.TextIOBase, props: AnyProps) -> None:
     out.write(raw)
 
 
+template_gh_workflows_ci_yml = Template(
+    """
+name: ci 
+on:
+  push:
+    branches:
+      - master 
+      - main
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - uses: actions/cache@v2
+        with:
+          key: $${{ github.ref }}
+          path: .cache
+      - run: pip install -r requirements/docs.txt 
+      - run: mkdocs gh-deploy --force
+""".strip()
+)
+
+
+def gh_workflows_ci_yml(out: io.TextIOBase, props: AnyProps) -> None:
+    del props  # Unused.
+    raw = template_gh_workflows_ci_yml.substitute()
+    out.write(raw)
+
+
 class TemplateProps(  # type: ignore[misc]
     PyprojectTomlProps,
     SetupPyProps,

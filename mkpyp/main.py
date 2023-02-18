@@ -302,6 +302,8 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
     pkg_base = base / package_name
     req_base = base / "requirements"
     docs_base = base / "docs"
+    gh_base = base / ".github"
+    workflow_base = gh_base / "workflows"
     Action(mkdir, base).then(
         Action(mkdir, pkg_base).then(
             Action(mkfile, pkg_base / "main.py"),
@@ -341,6 +343,11 @@ def generate(pwd: Path, props: dict[str, Any], testing: bool = True) -> None:
         Action(filewriter, base / "mkdocs.yml", templates.mkdocs_yml, props),
         Action(mkdir, docs_base).then(
             Action(filewriter, docs_base / "index.md", templates.docs_index_md, props),
+        ),
+        Action(mkdir, gh_base).then(
+            Action(mkdir, workflow_base).then(
+                Action(filewriter, workflow_base / "ci.yml", templates.gh_workflows_ci_yml, props),
+            )
         ),
     ).execute()
 
