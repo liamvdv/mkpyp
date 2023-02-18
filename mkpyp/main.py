@@ -15,6 +15,7 @@ from mkpyp import templates
 
 # TODO(liamvdv): start actually supporting automatic ChangeLog generation.
 
+
 def get_git_config() -> dict[str, str]:
     data = {}
     res = subprocess.run(["git", "config", "--list"], stdout=subprocess.PIPE)
@@ -186,6 +187,7 @@ class Action:
         for action in self.children:
             action.execute()
 
+
 def mkpyp(*args: Any, dry: bool = False, infile: str = None, outfile: str = None) -> None:  # type: ignore[assignment]
     """
     generate idiomatic python projects in subdirectory
@@ -299,4 +301,3 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
-

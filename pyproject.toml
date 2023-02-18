@@ -30,7 +30,7 @@ classifiers = [
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Internet',
 ]
-requires-python = '>=3.7'
+requires-python = '>=3.9'
 # DEP: Define dependencies here. Also see setup.py to support GitHub metadata indexing.
 dependencies = ['pydantic==1.10.4', 'fire==0.5.0', 'inquirerpy==0.3.4']
 # OPTDEP: Define opt-in dependencies here. Also grep over the code base to see other places that might need change.
@@ -67,7 +67,7 @@ mccabe = { max-complexity = 14 }
 [tool.black]
 color = true
 line-length = 120
-target-version = ['py37'] # default
+target-version = ['py39'] # default
 # skip-string-normalization = true
 
 
@@ -80,7 +80,7 @@ force_grid_wrap = 0
 combine_as_imports = true
 
 [tool.mypy]
-python_version = '3.7'
+python_version = '3.9'
 show_error_codes = true
 follow_imports = 'silent'
 strict_optional = true

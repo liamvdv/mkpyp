@@ -29,10 +29,13 @@ make refresh-requirements
 
 # install the requirements and install 'mkpyp' as editable package
 make install
+
+# autorun pre commit, needs .git directoy | manually run with pre-commit
+pre-commit install
 ```
 
 ## Dependency Management
-The location of where dependencies are declared depends on their scope. 
+The location of where dependencies are declared depends on their scope.
 
 - Package dependencies must be put into `pyproject.toml [project] .dependencies`.
 - Opt-in dependencies must be put into `pyproject.toml [project] .optional-dependencies`.
@@ -42,4 +45,4 @@ The location of where dependencies are declared depends on their scope.
 We generate the requirements files with `make refresh-requirements`. Reinstall with `make install`.
 
 ## Publish
-Build the project with `hatch build`. Now run `hatch publish --repo test` to upload the package to `test.pypi.org`. Use `hatch publish --repo main` to upload to the production PyPI. Define custom targets as per defined [here](https://hatch.pypa.io/latest/publish/#repository).  
+Build the project with `hatch build`. Now run `hatch publish --repo test` to upload the package to `test.pypi.org`. Use `hatch publish --repo main` to upload to the production PyPI. Define custom targets as per defined [here](https://hatch.pypa.io/latest/publish/#repository).

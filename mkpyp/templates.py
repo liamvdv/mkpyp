@@ -85,7 +85,7 @@ requires-python = '$REQUIRES_PYTHON_VERSION'
 # DEP: Define dependencies here. Also see setup.py to support GitHub metadata indexing.
 dependencies = [$DEPENDENCIES]
 # OPTDEP: Define opt-in dependencies here. Also grep over the code base to see other places that might need change.
-#         Example: With 
+#         Example: With
 #               optional-dependencies = { slug = ['python-dotenv>=0.10.4'] }
 #         Users can install $NAME[slug] to also install python-dotenv
 optional-dependencies = { }
@@ -230,8 +230,8 @@ sys.exit(1)
 
 setup(
     name='$NAME',
-    # DEP: pyproject.toml is the authorative source for dependencies. 
-    #      Update the line below to support GitHub metadata indexing. 
+    # DEP: pyproject.toml is the authorative source for dependencies.
+    #      Update the line below to support GitHub metadata indexing.
     install_requires=[$DEPENDENCIES],
 )
 """.strip()
@@ -373,7 +373,7 @@ install:
 .PHONY: refresh-requirements
 refresh-requirements:
 \t@echo "Updating requirements/*.txt files using pip-compile"
-\tfind requirements/ -name '*.txt' ! -name 'all.txt' -type f -delete 
+\tfind requirements/ -name '*.txt' ! -name 'all.txt' -type f -delete
 \tpip-compile -q --resolver backtracking -o requirements/linting.txt requirements/linting.in
 \tpip-compile -q --resolver backtracking -o requirements/testing.txt requirements/testing.in
 \tpip-compile -q --resolver backtracking -o requirements/pyproject.txt pyproject.toml
@@ -405,7 +405,7 @@ test:
 .PHONY: testcov
 testcov: test
 \t@echo "building coverage html"
-\t@coverage html 
+\t@coverage html
 
 .PHONY: all
 all: lint mypy testcov
@@ -623,8 +623,10 @@ make refresh-requirements
 make install
 ```
 
+You can run the pre-commit hooks with `pre-commit` or automatically run them before commits with `pre-commit install`. 
+
 ## Dependency Management
-The location of where dependencies are declared depends on their scope. 
+The location of where dependencies are declared depends on their scope.
 
 - Package dependencies must be put into `pyproject.toml [project] .dependencies`.
 - Opt-in dependencies must be put into `pyproject.toml [project] .optional-dependencies`.
